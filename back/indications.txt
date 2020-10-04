@@ -1,0 +1,4 @@
+As soon as you clone pjct
+you will create your own venv (python > 3.5.2)
+pip install -r requirements.txt
+python -m pip install requirements.txt
