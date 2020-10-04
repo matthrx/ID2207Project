@@ -10,23 +10,19 @@ import jwt
 
 auth = HTTPBasicAuth()
 
-
 #implemented as @token_required
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        print(request.headers)
-        if 'x-access-token' in request.headers:
-            token = request.headers["Authorization"].split("Bearer")[1]
+        if 'Authorization' in request.headers:
+            token = request.headers["Authorization"].split("Bearer")[1].replace(" ", "")
             if not token:
-                return {"error" : "Token is missing"},401
+                return {"error" : "Token is missing"}, 401
             try:
                 data = jwt.decode(token, app.config["SECRET_KEY"])
                 _ = User.query.filter_by(id=data['id']).first()
             except:
-                return {"error": "Token not found"}, 401
-
+                return {"error": "Problem of token "}, 401
             return f(*args, **kwargs)
         else:
             return {"error": "Not appropriate headers"}, 401
@@ -50,8 +46,8 @@ def authenticate():
         return matching.generate_auth_token(), 200
 
 
-@token_required
 @app.route("/connected/")
+@token_required
 def connected():
     return {"valid": "If you see this message, you're connected"}, 200
 
