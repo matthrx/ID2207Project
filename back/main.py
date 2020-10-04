@@ -1,10 +1,11 @@
-from flask import Flask
 from back.config import app, db
+import back.auth  # keep it
 from back.models import User, Roles
 
-@app.route("/")
-def test():
-    return "App Working"
+
+@app.route("/health")
+def health():
+    return {"status": "Up"}, 200
 
 
 if __name__ == '__main__':

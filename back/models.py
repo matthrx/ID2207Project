@@ -1,10 +1,11 @@
 from back.config import app, db
 from back.utils import generate_uuid, generate_date
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
+from flask import jsonify
 from passlib.apps import custom_app_context as pwd_context
 
+import datetime
 import enum
+import jwt
 
 
 class Roles(enum.Enum):
@@ -30,36 +31,26 @@ class User(db.Model):
     def __init__(self, username, password, role=None):
         self.id = generate_uuid()
         self.username = username
-        self.hash_password(password)
+        self.password_hashed = pwd_context.encrypt(password)
         self.last_connection_date = generate_date()
         if role: self.role = role
 
     def __repr__(self):
         return f'Id: {self.id} - Username: {self.username}'
 
-    def hash_password(self, password):
-        self.password_hashed = pwd_context.encrypt(password)
-
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hashed)
 
-    def generate_auth_token(self, expiration=900):
-        token_serialized = Serializer(app.config["SECRET_KEY"], expires_in=expiration)
-        return token_serialized.dumps(
+    def generate_auth_token(self, expire=900):
+        token = jwt.encode({'id': self.id, 'exp': datetime.datetime.utcnow()+datetime.timedelta(seconds=expire)},
+                           app.config["SECRET_KEY"])
+        return jsonify(
             {
-                'token': self.id,
-                "expiration": expiration
+                'token': token.decode("utf-8"),
+                "username": self.username,
+                "expiration": expire
             }
         )
 
-    @staticmethod
-    def verify_token_content(token):
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None  # valid token, but expired
-        except BadSignature:
-            return None  # invalid token
-        user = User.query.get(data['id'])
-        return user
+
+
