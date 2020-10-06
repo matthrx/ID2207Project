@@ -8,8 +8,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import jwt
 
-auth = HTTPBasicAuth()
-
 
 # implemented as @token_required
 def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
@@ -37,7 +35,6 @@ def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
 
 
 @app.route("/authenticate/", methods=['GET'])
-@auth.verify_password
 def authenticate():
     username, password = request.form["username"], request.form["password"]
     matching = User.query.filter(User.username == username).first()
