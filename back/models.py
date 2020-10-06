@@ -17,7 +17,30 @@ class Roles(enum.Enum):
     SM = 5,
     PM = 6,
     SS = 7,
-    PS = 8
+    PS = 8,
+    ADMIN = 9
+
+
+class PreferencesEvent(enum.Enum):
+    decorations = 0,
+    parties = 1,
+    photos_filming = 2
+    breakfast_launch_dinner = 3,
+    drinks = 4
+
+
+class Status(enum.Enum):
+    pending_SCSO = 0,
+    pending_FM = 1,
+    pending_AM = 2,
+    validated = 3
+    dismissed = 4,
+
+    def next(self):
+        cls = self.__class__
+        members = list(cls)
+        index = members.index(self) + 1 if members.index(self) < 2 else members.index(self)
+        return members[index]
 
 
 class User(db.Model):
@@ -51,6 +74,20 @@ class User(db.Model):
                 "expiration": expire
             }
         )
+
+
+class EventCreation(db.Model):
+    # no client record (won't be a table)
+    __tablename__ = "event_request"
+    record_number = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True, default=1)
+    client_name = db.Column(db.String(100))
+    event_type = db.Column(db.String(100))
+    from_date = db.Column(db.String(50))  # expecting dd/mm/yyyy
+    to_date = db.Column(db.String(50))
+    expected_number_attendees = db.Column(db.Integer)
+    preferences = db.Column(db.Enum(PreferencesEvent), nullable=True)
+    feedback_fm = db.Column(db.String)
+    status = db.Column(db.Enum(Status), default=Status.pending_SCSO)
 
 
 

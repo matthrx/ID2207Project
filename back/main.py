@@ -13,5 +13,7 @@ if __name__ == '__main__':
     db.create_all()
     user = User(username="matthieu", role=Roles.FM, password="password")
     db.session.add(user)
+    user_nd = User(username="alicia", role=Roles.AM, password="password")
+    db.session.add(user_nd)
     db.session.commit()
     app.run(port=8080)

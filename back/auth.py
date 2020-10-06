@@ -1,29 +1,35 @@
 from back.config import app, db
 from back.models import User, Roles
-
+from typing import List, Union
 from flask_httpauth import HTTPBasicAuth
 from flask import Response, request
-from functools import wraps
+from functools import wraps, partial
 from sqlalchemy.exc import SQLAlchemyError
 
 import jwt
 
 auth = HTTPBasicAuth()
 
-#implemented as @token_required
-def token_required(f):
+
+# implemented as @token_required
+def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'Authorization' in request.headers:
             token = request.headers["Authorization"].split("Bearer")[1].replace(" ", "")
             if not token:
-                return {"error" : "Token is missing"}, 401
+                return {"error": "Token is missing"}, 401
             try:
                 data = jwt.decode(token, app.config["SECRET_KEY"])
-                _ = User.query.filter_by(id=data['id']).first()
-            except:
+                user = User.query.filter_by(id=data['id']).first()
+                if roles:
+                    if user.role not in roles:
+                        return {
+                            "error": "Not authorized to have access to this ressource"
+                        }, 403
+                return f(user.role, *args, **kwargs)
+            except (jwt.ExpiredSignature, jwt.InvalidTokenError):  # expired signature we're suppose to resend a new token
                 return {"error": "Problem of token "}, 401
-            return f(*args, **kwargs)
         else:
             return {"error": "Not appropriate headers"}, 401
 
@@ -46,10 +52,28 @@ def authenticate():
         return matching.generate_auth_token(), 200
 
 
+classic_authentication = partial(is_authenticated_and_authorized, roles=None)
+fm_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.FM, Roles.ADMIN])
+cso_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.CSO, Roles.ADMIN])
+review_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SCSO, Roles.FM, Roles.AM,
+                                                                                      Roles.ADMIN])
+
+
 @app.route("/connected/")
-@token_required
+@classic_authentication
 def connected():
     return {"valid": "If you see this message, you're connected"}, 200
+
+
+@app.route("/authorized_FM")
+@fm_authentication_authorization
+def authorized():
+    """
+
+    :param cur_role: cur_role of the user
+    :return: 400 if pb or 200 of ok
+    """
+    return {"valid": "You can only see this message if you are FM or ADMIN"}
 
 
 # Debugging tool, so far not an endpoint
