@@ -79,14 +79,14 @@ class User(db.Model):
 class EventCreation(db.Model):
     # no client record (won't be a table)
     __tablename__ = "event_request"
-    record_number = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True, default=1)
+    record_number = db.Column(db.Integer, primary_key=True, autoincrement=True, default=1)
     client_name = db.Column(db.String(100))
     event_type = db.Column(db.String(100))
     from_date = db.Column(db.String(50))  # expecting dd/mm/yyyy
     to_date = db.Column(db.String(50))
     expected_number_attendees = db.Column(db.Integer)
     preferences = db.Column(db.Enum(PreferencesEvent), nullable=True)
-    feedback_fm = db.Column(db.String)
+    feedback_fm = db.Column(db.String, nullable=True)
     status = db.Column(db.Enum(Status), default=Status.pending_SCSO)
 
 

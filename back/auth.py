@@ -1,8 +1,7 @@
 from back.config import app, db
 from back.models import User, Roles
 from typing import List, Union
-from flask_httpauth import HTTPBasicAuth
-from flask import Response, request
+from flask import request
 from functools import wraps, partial
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -20,10 +19,14 @@ def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
             try:
                 data = jwt.decode(token, app.config["SECRET_KEY"])
                 user = User.query.filter_by(id=data['id']).first()
+                if not user:
+                    return {
+                        "error": "User not found "
+                    }, 401
                 if roles:
                     if user.role not in roles:
                         return {
-                            "error": "Not authorized to have access to this ressource"
+                            "error": "Not authorized to have access to this resource"
                         }, 403
                 return f(user.role, *args, **kwargs)
             except (jwt.ExpiredSignature, jwt.InvalidTokenError):  # expired signature we're suppose to resend a new token
@@ -58,11 +61,11 @@ review_authentication_authorization = partial(is_authenticated_and_authorized, r
 
 @app.route("/connected/")
 @classic_authentication
-def connected():
-    return {"valid": "If you see this message, you're connected"}, 200
+def connected(cur_roles):
+    return {"valid": "If you see this message, you're connected as {}".format(cur_roles.name)}, 200
 
 
-@app.route("/authorized_FM")
+@app.route("/authorized_FM/")
 @fm_authentication_authorization
 def authorized():
     """

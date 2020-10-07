@@ -60,7 +60,8 @@ def review_event_creation(cur_role: Roles):
         if cur_role == Roles.FM:
             return Response(status=401)
         event_request_to_delete = EventCreation.query.filter(
-            EventCreation.record_number == int(request.form["record_number"])
+            EventCreation.record_number == int(request.form["record_number"]),
+            EventCreation.status == Status.dismissed
         )
         try:
             db.session.delete(event_request_to_delete)
