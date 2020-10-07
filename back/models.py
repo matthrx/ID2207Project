@@ -2,7 +2,7 @@ from back.config import app, db
 from back.utils import generate_uuid, generate_date
 from flask import jsonify
 from passlib.apps import custom_app_context as pwd_context
-
+from sqlalchemy_serializer import SerializerMixin
 import datetime
 import enum
 import jwt
@@ -76,7 +76,7 @@ class User(db.Model):
         )
 
 
-class EventCreation(db.Model):
+class EventCreation(db.Model, SerializerMixin):
     # no client record (won't be a table)
     __tablename__ = "event_request"
     record_number = db.Column(db.Integer, primary_key=True, autoincrement=True, default=1)
@@ -89,5 +89,17 @@ class EventCreation(db.Model):
     feedback_fm = db.Column(db.String, nullable=True)
     status = db.Column(db.Enum(Status), default=Status.pending_SCSO)
 
-
+    def to_dict(self, only=(), rules=(),
+                date_format=None, datetime_format=None, time_format=None, tzinfo=None,
+                decimal_format=None, serialize_types=None):
+        return {
+            "record_number": self.record_number,
+            "client_name": self.client_name,
+            "from_date": self.from_date,
+            'to_date': self.to_date,
+            "expected_number_attendees": self.expected_number_attendees,
+            "preferences": self.preferences.name,
+            "feedback_fm": self.feedback_fm,
+            "status": self.status.name
+        }
 
