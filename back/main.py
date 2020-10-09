@@ -15,11 +15,11 @@ def health():
 
 
 if __name__ == '__main__':
-    #db.drop_all()
-    #db.create_all()
-    # user = User(username="matthieu", role=Roles.SCSO, password="password")
-    # db.session.add(user)
-    # user_nd = User(username="alicia", role=Roles.CSO, password="password")
-    # db.session.add(user_nd)
-    # db.session.commit()
+    db.drop_all()
+    db.create_all()
+    user = User(username="matthieu", role=Roles.SCSO, password="password")
+    db.session.add(user)
+    user_nd = User(username="alicia", role=Roles.CSO, password="password")
+    db.session.add(user_nd)
+    db.session.commit()
     app.run(port=8080)

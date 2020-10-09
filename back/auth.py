@@ -5,7 +5,7 @@ from flask import request
 from functools import wraps, partial
 from sqlalchemy.exc import SQLAlchemyError
 
-import jwt
+import jwt, json
 
 
 # implemented as @token_required
@@ -39,7 +39,8 @@ def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
 
 @app.route("/authenticate/", methods=['GET'])
 def authenticate():
-    username, password = request.form["username"], request.form["password"]
+    decoded_request = json.loads(request.data.decode())
+    username, password = decoded_request["username"], decoded_request["password"]
     matching = User.query.filter(User.username == username).first()
     are_credentials_ok = matching.verify_password(password) if matching else False
     if not are_credentials_ok:
@@ -71,9 +72,9 @@ def authorized():
     """
 
     :param cur_role: cur_role of the user
-    :return: 400 if pb or 200 of ok
+    :return: 400 if pb or 200 if ok
     """
-    return {"valid": "You can only see this message if you are FM or ADMIN"}
+    return {"valid": "You can only see this message if you are FM or ADMIN"}, 200
 
 
 # Debugging tool, so far not an endpoint
