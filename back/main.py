@@ -1,5 +1,6 @@
 import back.auth
 import back.event
+import back.tasks
 
 # ------------ DO NOT DELETE THE LINES BEFORE ---------
 

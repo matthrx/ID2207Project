@@ -56,8 +56,10 @@ def authenticate():
 classic_authentication = partial(is_authenticated_and_authorized, roles=None)
 fm_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.FM, Roles.ADMIN])
 cso_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.CSO, Roles.ADMIN])
+scso_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SCSO, Roles.ADMIN])
 review_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SCSO, Roles.FM, Roles.AM,
                                                                                       Roles.ADMIN])
+managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.PM, Roles.SM, Roles.ADMIN])
 
 
 @app.route("/connected/")
