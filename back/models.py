@@ -52,7 +52,7 @@ class Status(enum.Enum):
 
 
 class User(db.Model):
-    __tablename__ = "user"
+    __tablename__ = "User"
     id = db.Column(db.String, primary_key=True)
     username = db.Column(db.String(50))
     password_hashed = db.Column(db.String(128))  # hashed password
@@ -87,7 +87,7 @@ class User(db.Model):
 
 class EventCreation(db.Model, SerializerMixin):
     # no client record (won't be a table)
-    __tablename__ = "event_request"
+    __tablename__ = "Event"
     record_number = db.Column(db.Integer, primary_key=True, autoincrement=True, default=1)
     client_name = db.Column(db.String(100))
     event_type = db.Column(db.String(100))
@@ -115,9 +115,9 @@ class EventCreation(db.Model, SerializerMixin):
 
 
 class Application(db.Model, SerializerMixin):
-    __tablename__ = "application_project"
+    __tablename__ = "Application"
     project_reference = db.Column(db.String, primary_key=True)
-    client_record_number = db.Column(db.Integer, primary_key=True, autoincrement=True, default=1)
+    client_record_number = db.Column(db.Integer, primary_key=True, default=1)
     client_name = db.Column(db.String(100))
     event_type = db.Column(db.String(100))
     description = db.Column(db.String)
@@ -160,7 +160,8 @@ class Application(db.Model, SerializerMixin):
 
 
 class Tasks(db.Model, SerializerMixin):
-    task_id = db.Column(db.String(30), name="id_task", primary_key=True, default=0, autoincrement=True)
+    __tablename__ = "Tasks"
+    task_id = db.Column(db.String(30), name="id_task", primary_key=True, default="0000-000-000")
     project_reference = db.Column(db.String(), db.ForeignKey("Application.project_reference"), unique=False)
     description = db.Column(db.String())
     assign_to_user = db.Column(db.String(), db.ForeignKey("User.username"))
