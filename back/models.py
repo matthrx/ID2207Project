@@ -51,6 +51,13 @@ class Status(enum.Enum):
         return members[index]
 
 
+class DepartmentRecruitment(enum.Enum):
+    administration = 0,
+    services = 1,
+    production = 2,
+    financial = 3
+
+
 class User(db.Model):
     __tablename__ = "User"
     id = db.Column(db.String, primary_key=True)
@@ -166,3 +173,22 @@ class Tasks(db.Model, SerializerMixin):
     description = db.Column(db.String())
     assign_to_user = db.Column(db.String(), db.ForeignKey("User.username"))
     priority = db.Column(db.Enum(Priority), default=Priority.medium)
+
+
+class StaffRecruitment(db.Model, SerializerMixin):
+    __tablename__ = "Staff"
+    staff_request_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    is_full_time = db.Column(db.Boolean)
+    request_department = db.Column(db.Enum(DepartmentRecruitment))
+    year_experience_min = db.Column(db.Integer)
+    job_title = db.Column(db.String(200))
+    job_description = db.Column(db.String(500))
+
+
+class FinancialRequest(db.Model, SerializerMixin):
+    __tablename__ = "FinancialRequest"
+    financial_request_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    request_department = db.Column(db.Enum(DepartmentRecruitment))
+    project_reference = db.Column(db.String(), db.ForeignKey("Application.project_reference"), unique=False)
+    required_amount = db.Column(db.Integer)
+    reason = db.Column(db.String(500))

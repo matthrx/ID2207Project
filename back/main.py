@@ -1,6 +1,8 @@
 import back.auth
 import back.event
 import back.tasks
+import back.staff_recruitment
+import back.financial_service
 
 # ------------ DO NOT DELETE THE LINES BEFORE ---------
 
