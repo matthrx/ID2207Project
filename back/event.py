@@ -5,7 +5,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from back.auth import (cso_authentication_authorization,
                        review_authentication_authorization,
-                       scso_authentication_authorization
+                       scso_authentication_authorization,
+                       managers_authentication_authorization
                        )
 from back.config import db, app
 from back.models import (
@@ -13,7 +14,8 @@ from back.models import (
     EventCreation,
     PreferencesEvent,
     Roles,
-    Status)
+    Status,
+    User)
 from back.utils import generate_uuid
 
 
@@ -32,9 +34,9 @@ from back.utils import generate_uuid
 @scso_authentication_authorization
 def event_application_creation(*args):
     decode_request = json.loads(request.data.decode())
-
+    project_reference = generate_uuid()
     application_to_create = Application(
-        project_reference = generate_uuid(),
+        project_reference=project_reference,
         client_record_number=decode_request.get("record_number"),
         client_name=decode_request.get("client_name"),
         event_type=decode_request.get("event_type"),
@@ -54,11 +56,32 @@ def event_application_creation(*args):
     try:
         db.session.add(application_to_create)
         db.session.commit()
-        return Response(status=200)
+        return {
+            "project_reference": project_reference
+        }, 200
     except SQLAlchemyError as e:
         return {
                    "error": e.__dict__["orig"]
                }, 400
+
+
+@app.route("/event_application_retrieve/", methods=['GET'])
+@managers_authentication_authorization
+def application_retrieve(*args):
+    # either the use indicate the application id or we retrieve all of them
+    decoded_request = json.loads(request.data.decode())
+    if decoded_request.get("application_id"):
+        application_needed = Application.query.filter(
+            Application.project_reference == decoded_request.get("application_id")
+        ).all()
+        if not application_needed:
+            return {
+                "error": "Application not found (wrong id)"
+            }, 400
+        return application_needed.to_dict(), 200
+    else:
+        applications = Application.query.all()
+        return {"applications": [application.to_dict() for application in applications]}, 200
 
 
 @app.route("/event_creation/", methods=["POST"])
@@ -86,9 +109,9 @@ def event_creation(*args):
 # @marshal_with(parser_event)
 @app.route("/review_event_creation/", methods=["PUT", "GET", "DELETE"])
 @review_authentication_authorization
-def review_event_creation(cur_role: Roles):
+def review_event_creation(user: User):
     if request.method == "GET":
-        status_expected = eval("Status.pending_{}".format(cur_role.name))
+        status_expected = eval("Status.pending_{}".format(user.role.name))
         current_event_request_related = EventCreation.query.filter(
             EventCreation.status == status_expected
         ).all()
@@ -104,7 +127,7 @@ def review_event_creation(cur_role: Roles):
             }, 400
         if request.form.get("feedback"):
             current_event_request_related.feedback_fm = request.form.get("feedback", "No feedback added")
-        current_event_request_related.status = eval("Status.pending_{}.next()".format(cur_role.name)) \
+        current_event_request_related.status = eval("Status.pending_{}.next()".format(user.role.name)) \
             if not request.form.get("dismissed") else Status.dismissed
         try:
             db.session.commit()
@@ -114,7 +137,7 @@ def review_event_creation(cur_role: Roles):
                        "error": e.__dict__["orig"]
                    }, 400
     else:
-        if cur_role == Roles.FM:
+        if user.role == Roles.FM:
             return Response(status=401)
         event_request_to_delete = EventCreation.query.filter(
             EventCreation.record_number == int(request.form["record_number"]),

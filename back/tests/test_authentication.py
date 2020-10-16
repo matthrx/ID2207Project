@@ -39,7 +39,6 @@ class TestAuthentication(unittest.TestCase):
         }
         http_request.request("GET", "/connected/", headers=header)
         response = http_request.getresponse()
-        print(response.read())
         self.assertEqual(response.status, 200)
 
 

@@ -1,7 +1,7 @@
 from back.config import app, db
 from back.models import User, Roles
 from typing import List, Union
-from flask import request
+from flask import request, Response
 from functools import wraps, partial
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -28,7 +28,7 @@ def is_authenticated_and_authorized(f, roles: Union[List[Roles], None]):
                         return {
                             "error": "Not authorized to have access to this resource"
                         }, 403
-                return f(user.role, *args, **kwargs)
+                return f(user, *args, **kwargs)
             except (jwt.ExpiredSignature, jwt.InvalidTokenError):  # expired signature we're suppose to resend a new token
                 return {"error": "Problem of token "}, 401
         else:
@@ -53,14 +53,16 @@ def authenticate():
         return matching.generate_auth_token(), 200
 
 
-classic_authentication = partial(is_authenticated_and_authorized, roles=None)
+classic_authentication = partial(is_authenticated_and_authorized, roles=list(Roles.__dict__["_member_map_"].values()))
 fm_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.FM, Roles.ADMIN])
 cso_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.CSO, Roles.ADMIN])
 scso_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SCSO, Roles.ADMIN])
 review_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SCSO, Roles.FM, Roles.AM,
-                                                                                      Roles.ADMIN])
+                                                                           Roles.ADMIN])
+admin_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.ADMIN])
 managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.PM, Roles.SM, Roles.ADMIN])
-
+product_service_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SM, Roles.PM, Roles.PS, Roles.SS, Roles.ADMIN])
+hr_managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.HR, Roles.PM, Roles.SM, Roles.ADMIN])
 
 @app.route("/connected/")
 @classic_authentication
@@ -79,11 +81,38 @@ def authorized():
     return {"valid": "You can only see this message if you are FM or ADMIN"}, 200
 
 
-# Debugging tool, so far not an endpoint
-def add_user(username, password, role: Roles):
-    user = User(username=username, password=password, role=role)
+@app.route("/change_password/", methods=["PUT"])
+@classic_authentication
+def change_password(user: User):
+    decoded_request = json.loads(request.data.decode())
+    if not decoded_request.get("new_password"):
+        return Response(status=400)
+    user_concerned = User.query.filter_by(
+        User.id == user.id
+    ).first()
+    if user_concerned:
+        user_concerned.password = decoded_request.get("new_password")
+        try:
+            db.session.commit()
+            return Response(status=200)
+        except SQLAlchemyError as e:
+            return {
+                       "error": e.__dict__["orig"]
+                   }, 400
+
+
+@app.route("/create_user/", methods=["POST"])
+@admin_authentication_authorization
+def add_user(*args):
+    decoded_data = json.loads(request.data.decode())
+    user = User(username=decoded_data.get("username"),
+                password=decoded_data.get("password"),
+                role=eval("Roles.{}".format(decoded_data.get("role").lower()))
+                )
     try:
         db.session.add(user)
         db.session.commit()
     except SQLAlchemyError as e:
-        return str(e.__dict__["orig"])
+        return {
+            "error": e.__dict__["orig"]
+        }, 400

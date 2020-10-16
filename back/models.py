@@ -37,6 +37,12 @@ class Priority(enum.Enum):
     very_low: 4
 
 
+class HRStatus(enum.Enum):
+    ongoing = 0,
+    dismissed = 1,
+    done = 2
+
+
 class Status(enum.Enum):
     pending_SCSO = 0,
     pending_FM = 1,
@@ -174,15 +180,40 @@ class Tasks(db.Model, SerializerMixin):
     assign_to_user = db.Column(db.String(), db.ForeignKey("User.username"))
     priority = db.Column(db.Enum(Priority), default=Priority.medium)
 
+    def to_dict(self, only=(), rules=(),
+                date_format=None, datetime_format=None, time_format=None, tzinfo=None,
+                decimal_format=None, serialize_types=None):
+        return {
+            "task_id": self.task_id,
+            "project_reference": self.project_reference,
+            "description": self.description,
+            "assign_to_user": self.assign_to_user,
+            "priority": self.priority.name
+        }
+
 
 class StaffRecruitment(db.Model, SerializerMixin):
     __tablename__ = "Staff"
-    staff_request_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    staff_request_id = db.Column(db.String, primary_key=True)
     is_full_time = db.Column(db.Boolean)
     request_department = db.Column(db.Enum(DepartmentRecruitment))
     year_experience_min = db.Column(db.Integer)
     job_title = db.Column(db.String(200))
     job_description = db.Column(db.String(500))
+    status = db.Column(db.Enum(HRStatus), default=HRStatus.ongoing)
+
+    def to_dict(self, only=(), rules=(),
+                date_format=None, datetime_format=None, time_format=None, tzinfo=None,
+                decimal_format=None, serialize_types=None):
+        return {
+            "staff_request_id": self.staff_request_id,
+            "is_full_time": self.is_full_time,
+            "request_department": self.request_department,
+            "year_experience_min": self.year_experience_min,
+            "job_title": self.job_title,
+            "job_description": self.job_description,
+            "status": self.status.name
+        }
 
 
 class FinancialRequest(db.Model, SerializerMixin):
