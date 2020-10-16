@@ -37,7 +37,7 @@ class Priority(enum.Enum):
     very_low: 4
 
 
-class HRStatus(enum.Enum):
+class RequestStatus(enum.Enum):
     ongoing = 0,
     dismissed = 1,
     done = 2
@@ -200,7 +200,7 @@ class StaffRecruitment(db.Model, SerializerMixin):
     year_experience_min = db.Column(db.Integer)
     job_title = db.Column(db.String(200))
     job_description = db.Column(db.String(500))
-    status = db.Column(db.Enum(HRStatus), default=HRStatus.ongoing)
+    status = db.Column(db.Enum(RequestStatus), default=RequestStatus.ongoing)
 
     def to_dict(self, only=(), rules=(),
                 date_format=None, datetime_format=None, time_format=None, tzinfo=None,
@@ -218,8 +218,20 @@ class StaffRecruitment(db.Model, SerializerMixin):
 
 class FinancialRequest(db.Model, SerializerMixin):
     __tablename__ = "FinancialRequest"
-    financial_request_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    financial_request_id = db.Column(db.String, primary_key=True)
     request_department = db.Column(db.Enum(DepartmentRecruitment))
     project_reference = db.Column(db.String(), db.ForeignKey("Application.project_reference"), unique=False)
     required_amount = db.Column(db.Integer)
     reason = db.Column(db.String(500))
+    status =db.Column(db.Enum(RequestStatus), default=RequestStatus.ongoing)
+
+    def to_dict(self, only=(), rules=(),
+                date_format=None, datetime_format=None, time_format=None, tzinfo=None,
+                decimal_format=None, serialize_types=None):
+        return {
+            "financial_request_id": self.financial_request_id,
+            "request_department": self.request_department.name.upper(),
+            "project_reference": self.project_reference,
+            "required_amount": self.required_amount,
+            "reason": self.reason
+        }

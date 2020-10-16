@@ -63,6 +63,7 @@ admin_authentication_authorization = partial(is_authenticated_and_authorized, ro
 managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.PM, Roles.SM, Roles.ADMIN])
 product_service_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.SM, Roles.PM, Roles.PS, Roles.SS, Roles.ADMIN])
 hr_managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.HR, Roles.PM, Roles.SM, Roles.ADMIN])
+fm_managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.PM, Roles.SM, Roles.FM, Roles.ADMIN])
 
 @app.route("/connected/")
 @classic_authentication

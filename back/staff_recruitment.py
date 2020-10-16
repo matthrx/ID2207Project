@@ -3,7 +3,7 @@ from .auth import (
         hr_managers_authentication_authorization
         )
 from .config import db, app
-from .models import StaffRecruitment, DepartmentRecruitment, User, HRStatus, Roles
+from .models import StaffRecruitment, DepartmentRecruitment, User, RequestStatus, Roles
 from .utils import generate_uuid
 
 from flask import request, Response
@@ -59,14 +59,14 @@ def review_staff_request(user: User):
             return Response(status=401)
         current_staff_request = StaffRecruitment.query.filter(
             StaffRecruitment.staff_request_id == decoded_request.get("staff_request_id"),
-            StaffRecruitment.status == HRStatus.ongoing
+            StaffRecruitment.status == RequestStatus.ongoing
         )
         if not current_staff_request:
             return {
                 "error": "No ongoing request with those parameters"
             }, 400
-        current_staff_request.status = HRStatus.done if decoded_request.get("status").lower() == "done" \
-            else HRStatus.dismissed
+        current_staff_request.status = RequestStatus.done if decoded_request.get("status").lower() == "done" \
+            else RequestStatus.dismissed
         try:
             db.session.commit()
             return Response(status=200)
@@ -80,7 +80,8 @@ def review_staff_request(user: User):
                 "error": "Need to indicate the staff request id"
             }, 400
         to_delete = StaffRecruitment.query.filter(
-            StaffRecruitment.staff_request_id == decoded_request.get("staff_request_id")
+            StaffRecruitment.staff_request_id == decoded_request.get("staff_request_id"),
+            StaffRecruitment.status == RequestStatus.ongoing
         )
         try:
             db.session.delete(to_delete)
