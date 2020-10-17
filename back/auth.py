@@ -67,8 +67,8 @@ fm_managers_authentication_authorization = partial(is_authenticated_and_authoriz
 
 @app.route("/connected/")
 @classic_authentication
-def connected(cur_roles):
-    return {"valid": "If you see this message, you're connected as {}".format(cur_roles.name)}, 200
+def connected(user: User):
+    return {"valid": "If you see this message, you're connected as {}".format(user.username)}, 200
 
 
 @app.route("/authorized_FM/")
