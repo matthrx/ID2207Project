@@ -65,6 +65,7 @@ product_service_authentication_authorization = partial(is_authenticated_and_auth
 hr_managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.HR, Roles.PM, Roles.SM, Roles.ADMIN])
 fm_managers_authentication_authorization = partial(is_authenticated_and_authorized, roles=[Roles.PM, Roles.SM, Roles.FM, Roles.ADMIN])
 
+
 @app.route("/connected/")
 @classic_authentication
 def connected(user: User):
@@ -73,10 +74,8 @@ def connected(user: User):
 
 @app.route("/authorized_FM/")
 @fm_authentication_authorization
-def authorized():
+def authorized(*args):
     """
-
-    :param cur_role: cur_role of the user
     :return: 400 if pb or 200 if ok
     """
     return {"valid": "You can only see this message if you are FM or ADMIN"}, 200

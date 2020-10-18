@@ -89,6 +89,7 @@ def application_retrieve(*args):
 def event_creation(*args):
     decode_request = json.loads(request.data.decode())
     event_create = EventCreation(
+        record_number=generate_uuid(),
         client_name=decode_request.get("client_name"),
         event_type=decode_request.get("event_type"),
         from_date=decode_request.get("from_date"),
@@ -117,18 +118,19 @@ def review_event_creation(user: User):
         ).all()
         return {"events": [each_event.to_dict() for each_event in current_event_request_related]}, 200
     elif request.method == "PUT":
+        decoded_request = json.loads(request.data.decode())
         # in this request user will be sending record_number (done automatically ;) )
         current_event_request_related = EventCreation.query.filter(
-            EventCreation.record_number == int(request.form["record_number"])
+            EventCreation.record_number == decoded_request.get("record_number")
         ).first()
         if not current_event_request_related:
             return {
                 "error": "request can't be fulfilled"
             }, 400
-        if request.form.get("feedback"):
-            current_event_request_related.feedback_fm = request.form.get("feedback", "No feedback added")
+        if decoded_request.get("feedback"):
+            current_event_request_related.feedback_fm = decoded_request.get("feedback", "No feedback added")
         current_event_request_related.status = eval("Status.pending_{}.next()".format(user.role.name)) \
-            if not request.form.get("dismissed") else Status.dismissed
+            if decoded_request.get("status").lower() != "dismissed" else Status.dismissed
         try:
             db.session.commit()
             return Response(status=200)
@@ -137,10 +139,11 @@ def review_event_creation(user: User):
                        "error": e.__dict__["orig"]
                    }, 400
     else:
+        decoded_request = json.loads(request.data.decode())
         if user.role == Roles.FM:
             return Response(status=401)
         event_request_to_delete = EventCreation.query.filter(
-            EventCreation.record_number == int(request.form["record_number"]),
+            EventCreation.record_number == decoded_request.get("record_number"),
             EventCreation.status == Status.dismissed
         )
         if not event_request_to_delete:

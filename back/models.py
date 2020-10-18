@@ -101,7 +101,7 @@ class User(db.Model):
 class EventCreation(db.Model, SerializerMixin):
     # no client record (won't be a table)
     __tablename__ = "Event"
-    record_number = db.Column(db.Integer, primary_key=True, autoincrement=True, default=1)
+    record_number = db.Column(db.String, primary_key=True)
     client_name = db.Column(db.String(100))
     event_type = db.Column(db.String(100))
     from_date = db.Column(db.String(50))  # expecting dd/mm/yyyy
