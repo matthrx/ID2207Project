@@ -36,7 +36,7 @@ if __name__ == '__main__':
     db.session.add(user_sv)
     user_ei = User(username="simon", role=Roles.HR, password="password")
     db.session.add(user_ei)
-    user_ni = User(username="mike", role=Roles.ADMIN, password="password")
+    user_ni = User(username="mike", role=Roles.AM, password="password")
     db.session.add(user_ni)
     db.session.commit()
     app.run(port=8080)

@@ -15,6 +15,7 @@ http_request = http.client.HTTPConnection(
         )
 
 token = str()
+application_id_tested = str()
 
 
 class TestManageEventApplication(unittest.TestCase):
@@ -45,16 +46,17 @@ class TestManageEventApplication(unittest.TestCase):
 
         http_request.request("POST", "/event_application_creation", headers=header, body=json.dumps(body))
         response = http_request.getresponse()
-        print(json.loads(response.read().decode()))
         self.assertEqual(response.status, 200)
+        global application_id_tested
+        application_id_tested = json.loads(response.read().decode())["project_reference"]
 
-    def test_application_retrieve(self):
+    def test_event_application_retrieve(self):
         username, password = "jack", "password"
         response = authenticate_client(username, password, http_request)
         header = {
             'Authorization': 'Bearer {}'.format(response.get("token"))
         }
-        body = {"application_id": "c125b14d-74c2-4a3c-bc7a-10a9249636ae"}
+        body = {"application_id": application_id_tested}
         http_request.request("GET", "/event_application_retrieve/", headers=header, body=json.dumps(body))
         response = http_request.getresponse()
         self.assertEqual(response.status, 200)

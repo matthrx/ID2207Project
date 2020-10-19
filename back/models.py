@@ -40,7 +40,8 @@ class Priority(enum.Enum):
 class RequestStatus(enum.Enum):
     ongoing = 0,
     dismissed = 1,
-    done = 2
+    done = 2,
+    suspended = 3
 
 
 class Status(enum.Enum):
@@ -179,6 +180,7 @@ class Tasks(db.Model, SerializerMixin):
     description = db.Column(db.String())
     assign_to_user = db.Column(db.String(), db.ForeignKey("User.username"))
     priority = db.Column(db.Enum(Priority), default=Priority.medium)
+    status = db.Column(db.Enum(RequestStatus), default=RequestStatus.ongoing)
 
     def to_dict(self, only=(), rules=(),
                 date_format=None, datetime_format=None, time_format=None, tzinfo=None,
@@ -188,7 +190,8 @@ class Tasks(db.Model, SerializerMixin):
             "project_reference": self.project_reference,
             "description": self.description,
             "assign_to_user": self.assign_to_user,
-            "priority": self.priority.name
+            "priority": self.priority.name,
+            "status": self.status.name
         }
 
 
@@ -208,7 +211,7 @@ class StaffRecruitment(db.Model, SerializerMixin):
         return {
             "staff_request_id": self.staff_request_id,
             "is_full_time": self.is_full_time,
-            "request_department": self.request_department,
+            "request_department": self.request_department.name,
             "year_experience_min": self.year_experience_min,
             "job_title": self.job_title,
             "job_description": self.job_description,
@@ -233,5 +236,6 @@ class FinancialRequest(db.Model, SerializerMixin):
             "request_department": self.request_department.name.upper(),
             "project_reference": self.project_reference,
             "required_amount": self.required_amount,
-            "reason": self.reason
+            "reason": self.reason,
+            "status": self.status.name
         }

@@ -73,7 +73,7 @@ def application_retrieve(*args):
     if decoded_request.get("application_id"):
         application_needed = Application.query.filter(
             Application.project_reference == decoded_request.get("application_id")
-        ).all()
+        ).first()
         if not application_needed:
             return {
                 "error": "Application not found (wrong id)"
@@ -121,16 +121,19 @@ def review_event_creation(user: User):
         decoded_request = json.loads(request.data.decode())
         # in this request user will be sending record_number (done automatically ;) )
         current_event_request_related = EventCreation.query.filter(
-            EventCreation.record_number == decoded_request.get("record_number")
+            EventCreation.record_number == decoded_request.get("record_number"),
+            EventCreation.status == eval("Status.pending_{}".format(user.role.name))
         ).first()
         if not current_event_request_related:
             return {
-                "error": "request can't be fulfilled"
+                "error": "Request can't be fulfilled"
             }, 400
         if decoded_request.get("feedback"):
-            current_event_request_related.feedback_fm = decoded_request.get("feedback", "No feedback added")
-        current_event_request_related.status = eval("Status.pending_{}.next()".format(user.role.name)) \
-            if decoded_request.get("status").lower() != "dismissed" else Status.dismissed
+            current_event_request_related.feedback_fm = decoded_request.get("feedback", "No feedback")
+            current_event_request_related.status = eval("Status.pending_{}.next()".format(user.role.name))
+        if decoded_request.get("status"):
+            current_event_request_related.status = eval("Status.pending_{}.next()".format(user.role.name)) \
+                if decoded_request.get("status").lower() != "dismissed" else Status.dismissed
         try:
             db.session.commit()
             return Response(status=200)
@@ -145,7 +148,7 @@ def review_event_creation(user: User):
         event_request_to_delete = EventCreation.query.filter(
             EventCreation.record_number == decoded_request.get("record_number"),
             EventCreation.status == Status.dismissed
-        )
+        ).first()
         if not event_request_to_delete:
             return {
                        "error": "request can't be fulfilled"

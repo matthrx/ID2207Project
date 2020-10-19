@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import json
 
 
-@app.route("/financial_request/")
+@app.route("/create_financial_request/", methods=["POST"])
 @managers_authentication_authorization
 def create_financial_request(*args):
     decoded_request = json.loads(request.data.decode())
@@ -24,8 +24,9 @@ def create_financial_request(*args):
         return {
                    "error": "Project not found "
                }, 400
+    financial_request_id = generate_uuid()
     financial_request = FinancialRequest(
-        financial_request_id=generate_uuid(),
+        financial_request_id=financial_request_id,
         request_department=eval("DepartmentRecruitment.{}".format(decoded_request.get("request_department"))),
         project_reference=decoded_request.get("project_reference"),
         required_amount=int(decoded_request.get("required_amount")),
@@ -34,7 +35,7 @@ def create_financial_request(*args):
     try:
         db.session.add(financial_request)
         db.session.commit()
-        return Response(status=200)
+        return {"financial_request_id": financial_request_id}, 200
     except SQLAlchemyError as e:
         return {
             "error": e.__dict__["orig"]
@@ -58,9 +59,8 @@ def review_financial_request(user: User):
             return {
                 "financial_requests": [each_f_request.to_dict() for each_f_request in financial_request]
             }, 200
-        return {
-            "error": "Expecting information either id or project"
-        }, 400
+        financial_requests = FinancialRequest.query.all()
+        return { "financial_requests": [each_f_request.to_dict() for each_f_request in financial_requests]}, 200
     elif request.method == "PUT":
         if user.role not in [Roles.FM, Roles.ADMIN]:
             return Response(status=401)
@@ -78,7 +78,7 @@ def review_financial_request(user: User):
                 "error": "id not recognized"
             }, 400
         financial_req_concerned.status = RequestStatus.done \
-            if decoded_request.get("status").lower() == "done" \
+            if decoded_request.get("status").lower() != "dismissed" \
             else RequestStatus.dismissed
         try:
             db.session.commit()

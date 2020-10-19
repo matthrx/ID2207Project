@@ -22,7 +22,7 @@ def create_staff_recruitment(*args):
         request_department=eval("DepartmentRecruitment.{}".format(decoded_request.get("request_department").lower())),
         year_experience_min=int(decoded_request.get("year_experience_min", None)),
         job_title=decoded_request.get("job_title"),
-        job_description=decoded_request.get("job_description")
+        job_description=decoded_request.get("job_description"),
     )
     try:
         db.session.add(staff_request)
@@ -60,12 +60,12 @@ def review_staff_request(user: User):
         current_staff_request = StaffRecruitment.query.filter(
             StaffRecruitment.staff_request_id == decoded_request.get("staff_request_id"),
             StaffRecruitment.status == RequestStatus.ongoing
-        )
+        ).first()
         if not current_staff_request:
             return {
                 "error": "No ongoing request with those parameters"
             }, 400
-        current_staff_request.status = RequestStatus.done if decoded_request.get("status").lower() == "done" \
+        current_staff_request.status = RequestStatus.done if decoded_request.get("status").lower() != "dismissed" \
             else RequestStatus.dismissed
         try:
             db.session.commit()
