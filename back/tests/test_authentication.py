@@ -1,6 +1,6 @@
 import unittest
 import http.client
-import json
+from back.tests.utils import authenticate_client
 
 address_server = "127.0.0.1"
 port_server = 8080
@@ -17,7 +17,7 @@ token = str()
 class TestAuthentication(unittest.TestCase):
 
     def test_client_exists(self):
-        username, password = "matthieu", "password"
+        username, password = "chris", "password"
         response = authenticate_client(username, password, http_request)
         self.assertEqual(response["username"], username)
         self.assertIsNot(response["token"], str())
@@ -33,20 +33,6 @@ class TestAuthentication(unittest.TestCase):
         response = http_request.getresponse()
         self.assertEqual(response.status, 200)
 
-
-def authenticate_client(username: str, password: str, http_request: http.client.HTTPConnection):
-    body = {
-        "username": username,
-        "password": password
-    }
-    body_json = json.dumps(body)
-    http_request.request('GET', '/authenticate/', body=body_json)
-    response = http_request.getresponse()
-    decoded_response = json.loads(response.read().decode())
-    if response.status == 200:
-        return decoded_response
-    else:
-        raise AssertionError("Authentication not done: {}".format(decoded_response.get("error")))
 
 if __name__ == '__main__':
     unittest.main()

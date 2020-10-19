@@ -8,3 +8,4 @@ def generate_uuid():
 
 def generate_date():
     return datetime.datetime.now().strftime("%Y/%m/%d:%H:%M")
+
