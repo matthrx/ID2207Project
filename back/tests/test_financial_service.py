@@ -27,8 +27,11 @@ class TestFinancialRequest(unittest.TestCase):
         http_request.request("GET", "/event_application_retrieve/", headers=header, body=json.dumps({}))
         response = http_request.getresponse()
         self.assertEqual(response.status, 200)
+        decoded_response = json.loads(response.read().decode())
         applications_references = list()
-        for each_application in json.loads(response.read().decode()).values():
+        if not decoded_response["applications"]:
+            raise AssertionError("No application exists, we can't launch financial request creation, further tests will fail")
+        for each_application in decoded_response["applications"]:
             applications_references = [e["project_reference"] for e in each_application]
         global project_reference
         project_reference = applications_references[0]
@@ -63,7 +66,6 @@ class TestFinancialRequest(unittest.TestCase):
         self.assertEqual(response.status, 200)
         financial_ids = list()
         financial_requests = json.loads(response.read().decode())
-        print(financial_requests)
         for financial_request in financial_requests["financial_requests"]:
             financial_ids.append(financial_request.get("financial_request_id", str()))
         if financial_request_id != str():

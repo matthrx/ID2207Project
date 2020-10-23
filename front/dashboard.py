@@ -1,6 +1,6 @@
 from tkinter import Label, Button, Canvas, W, E, FLAT, \
     Frame, Menu, DISABLED, NORMAL, Entry, END, Radiobutton, LabelFrame, GROOVE, StringVar, SOLID, \
-    messagebox, Scrollbar, BOTTOM, X, BooleanVar
+    messagebox, Scrollbar, BOTTOM, X, BooleanVar, Text
 from front.mapper import ROLES_MAPPER
 from front.config import ADDRESS, PORT
 import http.client
@@ -35,8 +35,8 @@ class Dashboard:
         self.cav = Canvas(master, width=master.winfo_width(), height=master.winfo_height() / 15, bg="white")
         self.cav.create_text(.99 * master.winfo_width(), int(master.winfo_height() / 30),
                              text="Logged as {}".format(username), anchor=E, font="Helvetica 10 bold")
-        button1 = Button(self.cav, text="Deconnect", command=self.deconnect,
-                         anchor=W, padx=10, bd=0)
+        button1 = Button(self.cav, text="Disconnect", command=self.deconnect,
+                         anchor=W, bd=0)
         button1.configure(width=15, background="white",
                           relief=FLAT, height=int(master.winfo_height() / 30))
         button1.pack()
@@ -62,8 +62,8 @@ class Dashboard:
         menu_bar.add_cascade(menu=event_request_menu, label="Event Creation")
 
         event_application = Menu(menu_bar)
-        event_application.add_command(label="Create", state=self.accesses_mapped[2])
-        event_application.add_command(label="Retrieve & more", state=self.accesses_mapped[3])
+        event_application.add_command(label="Create", state=self.accesses_mapped[2], command=self.create_application)
+        event_application.add_command(label="Retrieve & more", state=self.accesses_mapped[3], command=self.retrieve_application_ui)
         menu_bar.add_cascade(menu=event_application, label="Application")
 
         event_tasks = Menu(menu_bar)
@@ -89,7 +89,7 @@ class Dashboard:
         update_frame(self.additional_fr)
         sub_frame = Frame(self.additional_fr)
         sub_frame.grid(row=0, column=0)
-        label_record_number = Label(sub_frame, text="Record Number")
+        label_record_number = Label(sub_frame, text="Record Number (Client)")
         label_client_name = Label(sub_frame, text="Client Name")
         label_event_type = Label(sub_frame, text="Event Type")
         label_from_date = Label(sub_frame, text="From Date")
@@ -160,6 +160,8 @@ class Dashboard:
                 sub_frame.config(highlightcolor="red", highlightbackground="red", highlightthickness=3,
                                           relief=SOLID, bd=0)
                 label_error.config(text="Error click here to get details")
+                sub_frame.after(3000, lambda: label_error.config(text=""))
+                sub_frame.after(2000, lambda: sub_frame.config(relief=FLAT))
                 try:
                     decoded_response = json.loads(response.read().decode())
                     self.error_response = decoded_response["error"]
@@ -203,7 +205,7 @@ class Dashboard:
     def retrieve_event_request_ui(self):
         update_frame(self.additional_fr)
         data = self.retrieve_event_request()
-        headers = ["record_number", "client_name", "event_type", "from_date", "to_date", "preferences", "feedback_fm"]
+        headers = ["event_request_id", "client_name", "event_type", "from_date", "to_date", "preferences", "feedback_fm"]
         canvas = Canvas(self.additional_fr)
         canvas.grid(column=0, row=0)
         for i in range(len(data)):
@@ -282,6 +284,8 @@ class Dashboard:
                 frame_hr.config(highlightcolor="red", highlightbackground="red", highlightthickness=3,
                                           relief=SOLID, bd=0)
                 label_error.config(text="Error click here to get details")
+                frame_hr.after(3000, lambda: label_error.config(text=""))
+                frame_hr.after(2000, lambda:frame_hr.config(relief=FLAT))
                 try:
                     decoded_response = json.loads(response.read().decode())
                     self.error_response = decoded_response["error"]
@@ -312,7 +316,7 @@ class Dashboard:
                                                       relief=GROOVE, bd=2)
         entry_project_reference = Entry(frame_hr)
         entry_required_amount = Entry(frame_hr)
-        entry_reason = Entry(frame_hr)
+        entry_reason = Text(frame_hr, height=20, width=10)
 
         Radiobutton(requesting_department_labelframe, variable=self.requesting_department, value="administration",
                     text="Administration").grid(row=2, column=0, pady=20)
@@ -351,6 +355,8 @@ class Dashboard:
                 frame_hr.config(highlightcolor="red", highlightbackground="red", highlightthickness=3,
                                           relief=SOLID, bd=0)
                 label_error.config(text="Error click here to get details")
+                frame_hr.after(3000, lambda: label_error.config(text=""))
+                frame_hr.after(2000, lambda: frame_hr.config(relief=FLAT))
                 try:
                     decoded_response = json.loads(response.read().decode())
                     self.error_response = decoded_response["error"]
@@ -419,6 +425,8 @@ class Dashboard:
                 frame_hr.config(highlightcolor="red", highlightbackground="red", highlightthickness=3,
                                 relief=SOLID, bd=0)
                 label_error.config(text="Error click here to get details")
+                frame_hr.after(3000, lambda: label_error.config(text=""))
+                frame_hr.after(2000, lambda: frame_hr.config(relief=FLAT))
                 try:
                     decoded_response = json.loads(response.read().decode())
                     self.error_response = decoded_response["error"]
@@ -560,12 +568,180 @@ class Dashboard:
             width = 15 if j > 0 else 45
             Label(canvas, text="{}".format(head), width=width, relief=SOLID, bd=2, pady=30,
                   font="Helevetica 9 bold").grid(row=1, column=j)
-        Label(canvas, text="Financial Requests", font="Helvetica 13 bold",
+        Label(canvas, text="HR Requests", font="Helvetica 13 bold",
               underline=True).grid(row=0, column=0)
         self.additional_fr.pack_propagate(0)
         self.additional_fr.pack()
 
+    def create_application(self):
+        token = self.token
+        update_frame(self.additional_fr)
+        sub_frame = Frame(self.additional_fr)
+        sub_frame.grid(row=0, column=0)
+        label_record_number = Label(sub_frame, text="Record Number (Client)")
+        label_client_name = Label(sub_frame, text="Client Name")
+        label_event_type = Label(sub_frame, text="Event Type")
+        label_description = Label(sub_frame, text='Description')
+        label_number_attendees = Label(sub_frame, text="Expected Number")
+        label_excepted_budget = Label(sub_frame, text="Planned Budget (SEK)")
+        label_from_date = Label(sub_frame, text="From")
+        label_to_date = Label(sub_frame, text="To")
+        label_decorations = Label(sub_frame, text="Decorations")
+        label_food_drinks = Label(sub_frame, text="Food/Drinks")
+        label_filming_photos = Label(sub_frame, text="Filming/Photos")
+        label_music = Label(sub_frame, text="Music")
+        label_posters_artwork = Label(sub_frame, text="Posters/Art Work")
+        label_computer_related_issues = Label(sub_frame, text="Computer-Related Issues")
+        label_other_needs = Label(sub_frame, text="Other Needs")
 
+        entry_number_attendees = Entry(sub_frame)
+        entry_expected_budget = Entry(sub_frame)
+        entry_to_date = Entry(sub_frame)
+        entry_from_date = Entry(sub_frame)
+        entry_event_type = Entry(sub_frame)
+        entry_client_name = Entry(sub_frame)
+        entry_record_number = Entry(sub_frame)
+        entry_description = Entry(sub_frame)
+        entry_from_date.insert(END, "yyyy/mm/dd")
+        entry_to_date.insert(END, "yyyy/mm/dd")
+        text_decorations = Text(sub_frame, width=40, height=5)
+        text_food_drinks = Text(sub_frame, width=40, height=5)
+        text_filming_photos = Text(sub_frame, width=40, height=5)
+        text_music = Text(sub_frame, width=40, height=5)
+        text_poster_art_work = Text(sub_frame, width=40, height=5)
+        text_computer = Text(sub_frame, width=40, height=5)
+        text_other_needs = Text(sub_frame, width=80, height=2)
 
+        button_submit = Button(sub_frame, text="Submit", width=10, height=1)
+        label_error = Label(sub_frame, text="", fg="red", font="Helvetica 9 bold")
+
+        label_record_number.grid(row=1, column=0, pady=20, sticky='nsew')
+        entry_record_number.grid(row=1, column=1, pady=20, sticky='nsew')
+        label_client_name.grid(row=2, column=0)
+        entry_client_name.grid(row=2, column=1)
+        label_event_type.grid(row=3, column=0)
+        entry_event_type.grid(row=3, column=1)
+        label_description.grid(row=4, column=0)
+        entry_description.grid(row=4, column=1)
+        label_from_date.grid(row=5, column=0)
+        entry_from_date.grid(row=5, column=1)
+        label_to_date.grid(row=5, column=2)
+        entry_to_date.grid(row=5, column=3)
+        label_number_attendees.grid(row=2, column=2)
+        entry_number_attendees.grid(row=2, column=3)
+        label_excepted_budget.grid(row=3, column=2)
+        entry_expected_budget.grid(row=3, column=3)
+
+        label_decorations.grid(row=6, column=0, pady=20)
+        text_decorations.grid(row=6, column=1, pady=20)
+        label_food_drinks.grid(row=6, column=2, pady=20)
+        text_food_drinks.grid(row=6, column=3, pady=20)
+
+        label_filming_photos.grid(row=7, column=0, pady=20)
+        text_filming_photos.grid(row=7, column=1, pady=20)
+        label_music.grid(row=7, column=2, pady=20)
+        text_music.grid(row=7, column=3, pady=20)
+
+        label_posters_artwork.grid(row=8, column=0, pady=20)
+        text_poster_art_work.grid(row=8, column=1, pady=20)
+        label_computer_related_issues.grid(row=8, column=2, pady=20)
+        text_computer.grid(row=8, column=3, pady=20)
+
+        label_other_needs.grid(row=9, column=0, pady=20)
+        text_other_needs.grid(row=9, column=0, pady=20, columnspan=4)
+
+        button_submit.grid(row=11, column=1, pady=20)
+        label_error.grid(row=10, column=2)
+
+        def send_form(*args):
+            body = {
+                "record_number": entry_record_number.get(),
+                'client_name': entry_client_name.get(),
+                "event_type": entry_event_type.get(),
+                "description": entry_description.get(),
+                "from_date": entry_from_date.get(),
+                "to_date": entry_to_date.get(),
+                "expected_number_attendees": entry_number_attendees.get(),
+                "planned_budget": entry_expected_budget.get(),
+                "decorations": text_decorations.get("1.0",END),
+                "food_drinks": text_food_drinks.get("1.0",END),
+                "filming_photos": text_filming_photos.get("1.0",END),
+                "music": text_music.get("1.0",END),
+                "posters_art_work": text_poster_art_work.get("1.0",END),
+                "computer_related_issues": text_computer.get("1.0",END),
+                "other_needs": text_other_needs.get("1.0",END)
+            }
+            header = {
+                'Authorization': 'Bearer {}'.format(token)
+            }
+            http_request.request("POST", "/event_application_creation", headers=header, body=json.dumps(body))
+            response = http_request.getresponse()
+            if response.status > 200:
+                sub_frame.config(highlightcolor="red", highlightbackground="red", highlightthickness=3,
+                                relief=SOLID, bd=0)
+                label_error.config(text="Error click here to get details")
+                sub_frame.after(3000, lambda: label_error.config(text=""))
+                sub_frame.after(2000, lambda: sub_frame.config(relief=FLAT))
+                try:
+                    decoded_response = json.loads(response.read().decode())
+                    self.error_response = decoded_response["error"]
+                except (KeyError, json.decoder.JSONDecodeError):
+                    self.status_response = "400 or 500"
+                    self.error_response = "No information given by server, information were not properly given"
+                label_error.bind("<Button-1>", self.display_error)
+            else:
+                self.display_validation()
+
+        button_submit.bind("<Button-1>", send_form)
+            # self.additional_fr.bind("<Return>", self.send_form)
+        sub_frame.bind("<Return>", send_form)
+        self.additional_fr.pack()
+
+    def retrieve_application_ui(self):
+        update_frame(self.additional_fr)
+        data = self.retrieve_application_request()
+        headers = ["project_reference", "client_name", "event_type", "description", "from_date", "to_date", "number_attendees"]
+        canvas = Canvas(self.additional_fr)
+        canvas.grid(column=0, row=0)
+        for i in range(len(data)):
+            for j, head in enumerate(headers):
+                width = 15 if j > 0 else 45
+                # if head == "details":
+                #     text = str()
+                #     for (key,value) in data[i]["details"].items():
+                #         if len(value)>1:
+                #             text += "{}: {}\n".format(key, value)
+                #     l = Label(canvas, text=text, width=width, relief=SOLID, bd=2, font="Helevetica 9 bold")
+                # else:
+                l = Label(canvas, text="{}".format(data[i][head]), width=width, relief=SOLID, bd=2,
+                      font="Helevetica 9 bold")
+                l.grid(row=i + 2, column=j)
+        for j, head in enumerate(headers):
+            width = 15 if j > 0 else 45
+            Label(canvas, text="{}".format(head), width=width, relief=SOLID, bd=2, pady=30,
+                  font="Helevetica 9 bold").grid(row=1, column=j)
+        Label(canvas, text="Applications", font="Helvetica 13 bold",
+              underline=True).grid(row=0, column=0)
+        self.additional_fr.pack_propagate(0)
+        self.additional_fr.pack()
+
+    def retrieve_application_request(self):
+        header = {
+            'Authorization': 'Bearer {}'.format(self.token)
+        }
+        http_request.request("GET", "/event_application_retrieve/", headers=header, body=json.dumps(dict()))
+        response = http_request.getresponse()
+        if response.status > 200:
+            try:
+                decoded_response = json.loads(response.read().decode())
+                self.error_response = decoded_response["error"]
+            except (KeyError, json.decoder.JSONDecodeError):
+                self.status_response = "400 or 500"
+                self.error_response = "No information given by server, unknown error"
+            self.display_error(None)
+            return []
+        else:
+            decoded_response = json.loads(response.read().decode())
+            return decoded_response["applications"]
 
 

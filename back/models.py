@@ -117,7 +117,7 @@ class EventCreation(db.Model, SerializerMixin):
                 date_format=None, datetime_format=None, time_format=None, tzinfo=None,
                 decimal_format=None, serialize_types=None):
         return {
-            "record_number": self.record_number,
+            "event_request_id": self.record_number,
             "client_name": self.client_name,
             "event_type": self.event_type,
             "from_date": self.from_date,
@@ -160,15 +160,15 @@ class Application(db.Model, SerializerMixin):
             "description": self.description,
             "from_date": self.from_date,
             'to_date': self.to_date,
-            "expected_number_attendees": self.expected_number_attendees,
+            "number_attendees": self.expected_number_attendees,
             "planned_budget": self.planned_budget,
-            "application_details": {
+            "details": {
                 "decorations": self.decorations,
                 "food_drinks": self.food_drinks,
                 "filming_photos": self.filming_photos,
                 "music": self.music,
                 "poster_art_work": self.posters_art_work,
-                "computer_related_issues": self.computer_related_issues,
+                "computer_issues": self.computer_related_issues,
                 "other_needs": self.other_needs
             }
         }

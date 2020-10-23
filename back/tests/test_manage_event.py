@@ -15,7 +15,7 @@ http_request = http.client.HTTPConnection(
 
 token = str()
 event_id_tested = list()
-financial_manager_feedback = "Project seems unfeasible financially"
+financial_manager_feedback = "Project seems financially unfeasible"
 
 
 class TestManageEvent(unittest.TestCase):
@@ -52,7 +52,7 @@ class TestManageEvent(unittest.TestCase):
         print(decoded_response)
         event_ids = list()
         for event in decoded_response.values():
-            event_ids = [e["record_number"] for e in event]
+            event_ids = [e["event_request_id"] for e in event]
         global event_id_tested
         event_id_tested = event_ids[0]
         self.assertEqual(response.status, 200)
