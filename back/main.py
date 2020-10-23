@@ -18,7 +18,8 @@ def health():
 
 
 if __name__ == '__main__':
-    db.drop_all()
+    # if you want to reinitialize db content please uncomment next line
+    # db.drop_all()
     db.create_all()
     user = User(username="admin", role=Roles.ADMIN, password="admin")
     db.session.add(user)

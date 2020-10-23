@@ -32,7 +32,7 @@ class TestFinancialRequest(unittest.TestCase):
         if not decoded_response["applications"]:
             raise AssertionError("No application exists, we can't launch financial request creation, further tests will fail")
         for each_application in decoded_response["applications"]:
-            applications_references = [e["project_reference"] for e in each_application]
+            applications_references.append(each_application["project_reference"])
         global project_reference
         project_reference = applications_references[0]
 

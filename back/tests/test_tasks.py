@@ -28,6 +28,10 @@ class TestTasks(unittest.TestCase):
         body = {}
         http_request.request("GET", "/event_application_retrieve/", headers=header, body=json.dumps(body))
         response = http_request.getresponse()
+        decoded_response = json.loads(response.read().decode())
+        if not decoded_response["applications"]:
+            raise AssertionError(
+                "No application exists, we can't launch financial request creation, further tests will fail")
         projects_references = list()
         for each_application in json.loads(response.read().decode()).values():
             projects_references = [e["project_reference"] for e in each_application]
@@ -96,6 +100,7 @@ class TestTasks(unittest.TestCase):
         http_request.request("DELETE", "/retrieve_task/", headers=header, body=json.dumps(body))
         response = http_request.getresponse()
         self.assertEqual(response.status, 200)
+
 
 if __name__ == '__main__':
     unittest.main()
