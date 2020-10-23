@@ -9,10 +9,9 @@ port_server = 8080
 http_request = http.client.HTTPConnection(
             host=address_server,
             port=port_server
+
         )
-
 token = str()
-
 
 class TestAuthentication(unittest.TestCase):
 

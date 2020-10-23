@@ -49,6 +49,7 @@ class TestManageEvent(unittest.TestCase):
         http_request.request("GET", "/review_event_creation/", headers=header)
         response = http_request.getresponse()
         decoded_response = json.loads(response.read().decode())
+        print(decoded_response)
         event_ids = list()
         for event in decoded_response.values():
             event_ids = [e["record_number"] for e in event]

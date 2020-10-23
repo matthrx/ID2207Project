@@ -87,14 +87,15 @@ class User(db.Model):
     def verify_password(self, password):
         return pwd_context.verify(password, self.password_hashed)
 
-    def generate_auth_token(self, expire=900):
+    def generate_auth_token(self, expire=3600):
         token = jwt.encode({'id': self.id, 'exp': datetime.datetime.utcnow()+datetime.timedelta(seconds=expire)},
                            app.config["SECRET_KEY"])
         return jsonify(
             {
                 'token': token.decode("utf-8"),
                 "username": self.username,
-                "expiration": expire
+                "expiration": expire,
+                'role': self.role.name
             }
         )
 

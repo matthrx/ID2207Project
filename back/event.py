@@ -112,6 +112,9 @@ def event_creation(*args):
 @review_authentication_authorization
 def review_event_creation(user: User):
     if request.method == "GET":
+        if user.role == Roles.ADMIN:
+            events = EventCreation.query.all()
+            return {"events": [each_event.to_dict() for each_event in events]}, 200
         status_expected = eval("Status.pending_{}".format(user.role.name))
         current_event_request_related = EventCreation.query.filter(
             EventCreation.status == status_expected
