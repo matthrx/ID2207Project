@@ -48,7 +48,7 @@ def review_staff_request(user: User):
         else:
             staff_requests = StaffRecruitment.query.all()
             return {
-                "tasks": [staff_request.to_dict() for staff_request in staff_requests]
+                "hr": [staff_request.to_dict() for staff_request in staff_requests]
             }, 200
     elif request.method == "PUT":
         if not decoded_request.get("staff_request_id"):

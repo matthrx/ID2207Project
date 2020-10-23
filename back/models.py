@@ -212,8 +212,8 @@ class StaffRecruitment(db.Model, SerializerMixin):
         return {
             "staff_request_id": self.staff_request_id,
             "is_full_time": self.is_full_time,
-            "request_department": self.request_department.name,
-            "year_experience_min": self.year_experience_min,
+            "department": self.request_department.name,
+            "years_min": self.year_experience_min,
             "job_title": self.job_title,
             "job_description": self.job_description,
             "status": self.status.name

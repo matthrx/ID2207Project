@@ -68,17 +68,18 @@ class Dashboard:
 
         event_tasks = Menu(menu_bar)
         event_tasks.add_command(label="Create", state=self.accesses_mapped[4], command=self.task_request)
-        event_tasks.add_command(label="Retrieve & more", state=self.accesses_mapped[5])
+        event_tasks.add_command(label="Retrieve & more", state=self.accesses_mapped[5],
+                                command=self.retrieve_task_ui)
         menu_bar.add_cascade(menu=event_tasks, label="Tasks")
 
         human_resource_request = Menu(menu_bar)
         human_resource_request.add_command(label="Create", state=self.accesses_mapped[6], command=self.hr_request)
-        human_resource_request.add_command(label="Retrieve & more", state=self.accesses_mapped[7])
+        human_resource_request.add_command(label="Retrieve & more", state=self.accesses_mapped[7], command=self.retrieve_hr_ui)
         menu_bar.add_cascade(menu=human_resource_request, label="HR")
 
         financial_request = Menu(menu_bar)
         financial_request.add_command(label="Create", state=self.accesses_mapped[8], command=self.fm_request)
-        financial_request.add_command(label="Retrieve & more", state=self.accesses_mapped[9])
+        financial_request.add_command(label="Retrieve & more", state=self.accesses_mapped[9], command=self.retrieve_fm_ui)
         menu_bar.add_cascade(menu=financial_request, label="Financial Requests")
 
         self.master.config(menu=menu_bar)
@@ -178,7 +179,7 @@ class Dashboard:
                              message="Status : {}, error: {}".format(self.status_response, self.error_response))
 
     def display_validation(self):
-        messagebox.showinfo(title="Success", message="Information received and validation by server")
+        messagebox.showinfo(title="Success", message="Information received and validated by server")
 
     def retrieve_event_request(self):
         header = {
@@ -197,7 +198,6 @@ class Dashboard:
             return []
         else:
             decoded_response = json.loads(response.read().decode())
-            print(decoded_response)
             return decoded_response["events"]
 
     def retrieve_event_request_ui(self):
@@ -303,7 +303,7 @@ class Dashboard:
         frame_hr = Frame(self.additional_fr)
         frame_hr.grid(row=0, column=0)
         label_project_reference = Label(frame_hr, text="Project Reference")
-        label_required_amount = Label(frame_hr, text="Required Amount")
+        label_required_amount = Label(frame_hr, text="Required Amount (SEK)")
         label_reason = Label(frame_hr, text="Reason")
 
         button_submit = Button(frame_hr, text="Submit", width=10, height=1)
@@ -329,7 +329,7 @@ class Dashboard:
         label_required_amount.grid(row=4, column=1, pady=20)
         entry_required_amount.grid(row=4, column=2, pady=20)
         label_reason.grid(row=5, column=1, pady=20)
-        entry_reason.grid(row=5, column=2, pady=20)
+        entry_reason.grid(row=5, column=2, pady=20, ipady=60, ipadx=35)
 
         button_submit.grid(row=6, column=1, pady=20)
         label_error = Label(frame_hr, text="", fg="red", font="Helvetica 9 bold")
@@ -377,7 +377,7 @@ class Dashboard:
 
         button_submit = Button(frame_hr, text="Submit", width=10, height=1)
 
-        requesting_priority = LabelFrame(frame_hr, text='Priority',
+        requesting_priority = LabelFrame(frame_hr, text='Priority', width=75, height=40,
                                                       relief=GROOVE, bd=2)
 
         entry_project_reference = Entry(frame_hr)
@@ -397,10 +397,11 @@ class Dashboard:
         entry_description.grid(row=6, column=2, pady=20)
         label_assigned_to.grid(row=7, column=1, pady=20)
         entry_assigned_to.grid(row=7, column=2, pady=20)
-        requesting_priority.grid(row=8, column=1, pady=20)
+        requesting_priority.grid(row=8, column=1, pady=20, padx=20)
 
         button_submit.grid(row=9, column=1, pady=20)
         label_error = Label(frame_hr, text="", fg="red", font="Helvetica 9 bold")
+        label_error.grid(row=9, column=2, pady=20)
 
         def send_form(*args):
             body = {
@@ -432,6 +433,138 @@ class Dashboard:
         # self.additional_fr.bind("<Return>", self.send_form)
         frame_hr.bind("<Return>", send_form)
         self.additional_fr.pack()
+
+    def retrieve_financial_request(self):
+        header = {
+            'Authorization': 'Bearer {}'.format(self.token)
+        }
+        http_request.request("GET", "/review_financial_request/", headers=header, body=json.dumps(dict()))
+        response = http_request.getresponse()
+        if response.status > 200:
+            try:
+                decoded_response = json.loads(response.read().decode())
+                self.error_response = decoded_response["error"]
+            except (KeyError, json.decoder.JSONDecodeError):
+                self.status_response = "400 or 500"
+                self.error_response = "No information given by server, unknown error"
+            self.display_error(None)
+            return []
+        else:
+            decoded_response = json.loads(response.read().decode())
+            return decoded_response["financial_requests"]
+
+    def retrieve_task_ui(self):
+        update_frame(self.additional_fr)
+        frame_hr = Frame(self.additional_fr)
+        frame_hr.grid(row=0, column=0)
+        Label(frame_hr, text="Project reference").grid(row=1, column=1)
+        entry_project_reference = Entry(frame_hr)
+        entry_project_reference.grid(row=1, column=2)
+
+        def submit_data(*args):
+            data = self.retrieve_task_request(entry_project_reference.get())
+            headers = ["project_reference", "description", "assign_to_user", "priority", "status"]
+            canvas = Canvas(frame_hr)
+            canvas.grid(column=0, row=5)
+            for i in range(len(data)):
+                for j, head in enumerate(headers):
+                    width = 15 if j > 0 else 45
+                    l = Label(canvas, text="{}".format(data[i][head]), width=width, relief=SOLID, bd=2,
+                              font="Helevetica 9 bold")
+                    l.grid(row=i + 2, column=j)
+            for j, head in enumerate(headers):
+                width = 15 if j > 0 else 45
+                Label(canvas, text="{}".format(head), width=width, relief=SOLID, bd=2, pady=30,
+                      font="Helevetica 9 bold").grid(row=1, column=j)
+            Label(canvas, text="Tasks for your project id", font="Helvetica 13 bold",
+                  underline=True).grid(row=0, column=0)
+        Button(frame_hr, text="Submit", command=submit_data).grid(row=1, column=3)
+        frame_hr.pack()
+
+    def retrieve_task_request(self, project_reference):
+        header = {
+            'Authorization': 'Bearer {}'.format(self.token)
+        }
+        body = {
+            "project_reference": project_reference
+        }
+        http_request.request("GET", "/retrieve_task/", headers=header, body=json.dumps(body))
+        response = http_request.getresponse()
+        if response.status > 200:
+            try:
+                decoded_response = json.loads(response.read().decode())
+                self.error_response = decoded_response["error"]
+            except (KeyError, json.decoder.JSONDecodeError):
+                self.status_response = "400 or 500"
+                self.error_response = "No information given by server, unknown error"
+            self.display_error(None)
+            return []
+        else:
+            decoded_response = json.loads(response.read().decode())
+            return decoded_response["tasks"]
+
+    def retrieve_fm_ui(self):
+        update_frame(self.additional_fr)
+        data = self.retrieve_financial_request()
+        headers = ["id", "department", "project_reference", "required_amount", "reason", "status"]
+        canvas = Canvas(self.additional_fr)
+        canvas.grid(column=0, row=0)
+        for i in range(len(data)):
+            for j, head in enumerate(headers):
+                width = 15 if j > 0 else 45
+                l = Label(canvas, text="{}".format(data[i][head]), width=width, relief=SOLID, bd=2,
+                          font="Helevetica 9 bold")
+                l.grid(row=i + 2, column=j)
+        for j, head in enumerate(headers):
+            width = 15 if j > 0 else 45
+            Label(canvas, text="{}".format(head), width=width, relief=SOLID, bd=2, pady=30,
+                  font="Helevetica 9 bold").grid(row=1, column=j)
+        Label(canvas, text="Financial Requests", font="Helvetica 13 bold",
+              underline=True).grid(row=0, column=0)
+        self.additional_fr.pack_propagate(0)
+        self.additional_fr.pack()
+
+    def retrieve_hr_request(self):
+        header = {
+            'Authorization': 'Bearer {}'.format(self.token)
+        }
+        http_request.request('GET', "/review_staff_request/", headers=header, body=json.dumps(dict()))
+        response = http_request.getresponse()
+        if response.status > 200:
+            try:
+                decoded_response = json.loads(response.read().decode())
+                self.error_response = decoded_response["error"]
+            except (KeyError, json.decoder.JSONDecodeError):
+                self.status_response = "400 or 500"
+                self.error_response = "No information given by server, unknown error"
+            self.display_error(None)
+            return []
+        else:
+            decoded_response = json.loads(response.read().decode())
+            return decoded_response["hr"]
+
+    def retrieve_hr_ui(self):
+        update_frame(self.additional_fr)
+        data = self.retrieve_hr_request()
+        headers = ["staff_request_id", "is_full_time", "department", "year_min", "job_title", "job_description", "status"]
+        canvas = Canvas(self.additional_fr)
+        canvas.grid(column=0, row=0)
+        for i in range(len(data)):
+            for j, head in enumerate(headers):
+                width = 15 if j > 0 else 45
+                l = Label(canvas, text="{}".format(data[i][head]), width=width, relief=SOLID, bd=2,
+                          font="Helevetica 9 bold")
+                l.grid(row=i + 2, column=j)
+        for j, head in enumerate(headers):
+            width = 15 if j > 0 else 45
+            Label(canvas, text="{}".format(head), width=width, relief=SOLID, bd=2, pady=30,
+                  font="Helevetica 9 bold").grid(row=1, column=j)
+        Label(canvas, text="Financial Requests", font="Helvetica 13 bold",
+              underline=True).grid(row=0, column=0)
+        self.additional_fr.pack_propagate(0)
+        self.additional_fr.pack()
+
+
 
 
 
