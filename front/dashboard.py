@@ -480,6 +480,7 @@ class Dashboard:
                   underline=True).grid(row=0, column=0)
         Button(frame_hr, text="Submit", command=submit_data).grid(row=1, column=3)
         frame_hr.pack()
+        self.additional_fr.pack()
 
     def retrieve_task_request(self, project_reference):
         header = {
